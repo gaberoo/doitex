@@ -11,6 +11,15 @@ Then, after running `latex`, `pdflatex`, `xelatex`, etc., run
 ruby doitex.rb <aux_file> <bib_file>
 ```
 Your `bib_file` will automatically be augmented with the missing references.
+If you are compiling a LaTeX document called `article.tex` with a bibliography file `references.bib`, run
+```
+pdflatex article
+ruby doitex.rb article.aux references.bib
+bibtex article
+pdflatex article
+pdflatex article
+```
+Hopefully in the future I/you/we can incorporate this into a latexmk workflow.
 
 ### Using a mapping file
 
@@ -38,7 +47,8 @@ so you can have anything else in there too.
 
 ## Installation
 
-For now, just install the dependencies first:
+You need ruby (comes with macOS and generally with Linux). I've tested this on Ruby 2.4.2, but raise issues if you find compatibility problems.
+Then, just install the dependencies:
 ```
 gem install bibtex-ruby serrano
 ```
