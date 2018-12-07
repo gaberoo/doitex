@@ -17,6 +17,13 @@ Your `bib_file` will automatically be augmented with the missing references.
 - [bibtex-ruby](https://github.com/inukshuk/bibtex-ruby])
 - [serrano](https://github.com/sckott/serrano)
 
+## Installation
+
+For now, just install the dependencies first:
+```
+gem install bibtex-ruby serrano
+```
+
 ## Future work (contributions welcome!)
 
 1. Create a proper gem.
