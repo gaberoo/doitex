@@ -21,6 +21,10 @@ OptionParser.new do |opts|
     options[:email] = email
   end
 
+  opts.on("--[no-]keep-url", "Keep URL from record.") do |u|
+    options[:url] = u
+  end
+
   opts.on("-v", "--[no-]verbose", "Output verbose messages") do |v|
     options[:verbose] = v
   end
@@ -102,9 +106,13 @@ works = works.join('\n') if missing_dois.length > 1
 bibs = BibTeX.parse(works)
 
 bibs.each do |bib|
-  bib.key = "doi:#{bib['doi']}"
-  missing_dois.delete bib['doi']
-  bibtex << bib
+  idx = missing_dois.map(&:downcase).index(bib['doi'])
+  if idx
+    bib.key = "doi:#{missing_dois[idx]}"
+    bib.delete(:url) unless options[:url]
+    missing_dois.delete_at idx
+    bibtex << bib
+  end
 end
 
 out_fn = options[:outfile] || bib_fn
