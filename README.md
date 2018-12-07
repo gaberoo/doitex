@@ -53,6 +53,10 @@ Then, just install the dependencies:
 gem install bibtex-ruby serrano
 ```
 
+### CrossRef polite pool
+
+CrossRef has a **polite pool**. To get into it, either specify your email address on the command line with the `-e` flag, or set the `CROSSREF_EMAIL` environmental variable.
+
 ## Future work (contributions welcome!)
 
 1. Create a proper gem.
