@@ -3,6 +3,7 @@
 require 'optparse'
 require 'bibtex'
 require 'serrano'
+require 'yaml'
 
 options = {}
 
@@ -23,6 +24,10 @@ OptionParser.new do |opts|
 
   opts.on("--[no-]keep-url", "Keep URL from record.") do |u|
     options[:url] = u
+  end
+
+  opts.on("-m", "--map [FILE]", "Map file") do |fn|
+    options[:map] = fn
   end
 
   opts.on("-v", "--[no-]verbose", "Output verbose messages") do |v|
@@ -60,17 +65,24 @@ others = []
 
 IGNORE_KEYS = [ 'biblatex-control' ]
 
+key_map = YAML.load_file(options[:map]) if options[:map]
+
 # open aux file
 File.open(aux_fn).each do |line|
   if line =~ /^\\citation{(.*)}$/
     key = $1
-    if key =~ /^doi:(.*)/
+    if key_map && key_map.keys.include?(key)
+      dois.push key
+    elsif key =~ /^doi:(.*)/
       dois.push $1
     elsif not IGNORE_KEYS.include? key
       others.push key
     end
   end
 end
+
+dois.uniq!
+others.uniq!
 
 # open bibtex file
 bibtex = BibTeX.open(bib_fn)
@@ -83,8 +95,14 @@ end
 
 missing_dois = []
 dois.each do |doi|
-  missing_dois.push(doi) unless bib_keys.include?("doi:#{doi}")
+  if key_map && key_map.include?(doi)
+    puts "Mapped DOI: #{doi} => #{key_map[doi]}" if options[:verbose]
+    missing_dois.push(key_map[doi]) unless bib_keys.include?(doi)
+  else
+    missing_dois.push(doi) unless bib_keys.include?("doi:#{doi}")
+  end
 end
+missing_dois.uniq!
 
 missing_other = others - bib_keys
 
@@ -98,8 +116,10 @@ else
   end
 end
 
-puts "Saving to backup file: #{options[:backup]}" if options[:verbose]
-File.open(options[:backup], 'w') { |file| file.write(bibtex) } if options[:backup]
+if options[:backup]
+  puts "Saving to backup file: #{options[:backup]}" if options[:verbose]
+  File.open(options[:backup], 'w') { |file| file.write(bibtex) }
+end
 
 works = Serrano.content_negotiation(ids: missing_dois)
 works = works.join('\n') if missing_dois.length > 1
@@ -108,7 +128,13 @@ bibs = BibTeX.parse(works)
 bibs.each do |bib|
   idx = missing_dois.map(&:downcase).index(bib['doi'])
   if idx
-    bib.key = "doi:#{missing_dois[idx]}"
+    key = key_map && key_map.key(missing_dois[idx])
+    if key
+      puts "Using mapped key: #{key} => #{missing_dois[idx]}" if options[:verbose]
+      bib.key = key
+    else
+      bib.key = "doi:#{missing_dois[idx]}"
+    end
     bib.delete(:url) unless options[:url]
     missing_dois.delete_at idx
     bibtex << bib
@@ -125,8 +151,3 @@ if missing_dois.length > 0
   missing_dois.each { |doi| puts "  #{doi}" }
 end
 
-#doi_bib = missing_dois.map do |doi|
-#  work = Serrano.content_negotiation(ids: doi)
-#end
-#
-#puts doi_bib
