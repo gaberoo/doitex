@@ -70,13 +70,15 @@ key_map = YAML.load_file(options[:map]) if options[:map]
 # open aux file
 File.open(aux_fn).each do |line|
   if line =~ /^\\citation{(.*)}$/
-    key = $1
-    if key_map && key_map.keys.include?(key)
-      dois.push key
-    elsif key =~ /^doi:(.*)/
-      dois.push $1
-    elsif not IGNORE_KEYS.include? key
-      others.push key
+    keys = $1.split(/,/)
+    keys.each do |key|
+      if key_map && key_map.keys.include?(key)
+        dois.push key
+      elsif key =~ /^doi:(.*)/
+        dois.push $1
+      elsif not IGNORE_KEYS.include? key
+        others.push key
+      end
     end
   end
 end
