@@ -14,8 +14,8 @@ Your `bib_file` will automatically be augmented with the missing references.
 
 ## Dependencies
 
-- [https://github.com/inukshuk/bibtex-ruby](bibtex-ruby)
-- [https://github.com/sckott/serrano](serrano)
+- [bibtex-ruby](https://github.com/inukshuk/bibtex-ruby])
+- [serrano](https://github.com/sckott/serrano)
 
 ## Future work (contributions welcome!)
 
