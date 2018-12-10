@@ -1,0 +1,91 @@
+#!/usr/bin/env ruby
+
+require 'doitex'
+require 'optparse'
+
+options = {}
+
+# Parse options
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: doitex.rb [options] <aux> <bib>"
+
+  opts.on("-K", "--backup [FILE]", "Create backup of bib file") do |fn|
+    options[:backup] = fn
+  end
+
+  opts.on("-o", "--output [FILE]", "Write new bib to this file (instead of overwriting old file).") do |fn|
+    options[:outfile] = fn
+  end
+
+  opts.on("-e", "--email [email]", "Email for CrossRef") do |email|
+    options[:email] = email
+  end
+
+  opts.on("--[no-]keep-url", "Keep URL from record.") do |u|
+    options[:url] = u
+  end
+
+  opts.on("-m", "--map [FILE]", "Map file") do |fn|
+    options[:map] = fn
+  end
+
+  opts.on("-v", "--[no-]verbose", "Output verbose messages") do |v|
+    options[:verbose] = v
+  end
+
+  opts.on_tail("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+end.parse!
+
+bib_fn = ARGV.pop
+aux_fn = ARGV.pop
+
+raise "Please specify an aux file" unless aux_fn
+raise "Please specify a bib file" unless bib_fn
+
+# check for CrossRef polite pool
+options[:email] = options[:email] || ENV['CROSSREF_EMAIL']
+
+if options[:verbose]
+  puts "Aux file = #{aux_fn}"
+  puts "BibTeX file = #{bib_fn}"
+end
+
+reffer = Doitex::CrossReffer(options)
+
+reffer.load_map(options[:map]) if options[:map]
+
+reffer.parse_aux(aux_fn)
+
+reffer.parse_bibtex(bib_fn)
+
+if reffer.missing_dois.length == 0
+  puts "Nothing to lookup. Huzzah!" if options[:verbose]
+  exit
+else
+  if options[:verbose]
+    puts "Looking up #{reffer.missing_dois.length} DOIs:"
+    reffer.missing_dois.each { |doi| puts "  #{doi}" }
+  end
+end
+
+if options[:backup]
+  puts "Saving to backup file: #{options[:backup]}" if options[:verbose]
+  File.open(options[:backup], 'w') { |file| file.write(reffer.bibtex) }
+end
+
+reffer.fetch_dois
+
+out_fn = options[:outfile] || bib_fn
+puts "Writing output to #{out_fn}" if options[:verbose]
+
+File.open(out_fn, 'w') { |file| file.write bibtex }
+
+if reffer.missing_dois.length > 0
+  puts "Couldn't find entires for the following DOIs:"
+  reffer.missing_dois.each { |doi| puts "  #{doi}" }
+end
+
