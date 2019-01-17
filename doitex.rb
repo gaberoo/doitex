@@ -69,8 +69,8 @@ key_map = YAML.load_file(options[:map]) if options[:map]
 
 # open aux file
 File.open(aux_fn).each do |line|
-  if line =~ /^\\citation{(.*)}$/
-    keys = $1.split(/,/)
+  if line =~ /^(\\citation{|\\abx\@aux\@cite{)(.*)}$/
+    keys = $2.split(/,/)
     keys.each do |key|
       if key_map && key_map.keys.include?(key)
         dois.push key
