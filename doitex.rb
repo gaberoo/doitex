@@ -124,7 +124,11 @@ if options[:backup]
 end
 
 works = Serrano.content_negotiation(ids: missing_dois)
-works = works.join('\n') if missing_dois.length > 1
+if missing_dois.length > 1
+  works = works.map{ |w| w.force_encoding("UTF-8") }.join('\n') 
+else
+  works = works.force_encoding("UTF-8")
+end
 bibs = BibTeX.parse(works)
 
 bibs.each do |bib|
